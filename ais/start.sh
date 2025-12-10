@@ -46,33 +46,33 @@ for var in $(compgen -e | grep "^AIS_FEED_" | sort); do
     # Format: IP:PORT|EXTRA_ARGUMENTS or just IP:PORT
     IFS='|' read -r endpoint extra_args <<< "$feed_value"
     
-    # Validate IP:PORT format
-    if [[ ! "$endpoint" =~ ^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}):([0-9]{1,5})$ ]]; then
-        echo "ERROR: $var has invalid format: $feed_value"
-        echo "       Expected format: IP:PORT or IP:PORT|EXTRA ARGUMENTS"
-        echo "       Example: 192.168.1.100:5000 or 192.168.1.100:5000|JSON ON"
-        feed_error=true
-        continue
-    fi
-    
-    ip="${BASH_REMATCH[1]}"
-    port="${BASH_REMATCH[2]}"
-    
-    # Validate port range
-    if [ "$port" -gt 65535 ]; then
-        echo "ERROR: $var has invalid port number: $port (must be 1-65535)"
-        feed_error=true
-        continue
-    fi
-    
-    # Build the feed string
-    if [ -n "$extra_args" ]; then
-        AIS_FEEDS="$AIS_FEEDS -u $ip $port $extra_args"
-        echo "Found feed: $var = $ip $port $extra_args"
-    else
-        AIS_FEEDS="$AIS_FEEDS -u $ip $port"
-        echo "Found feed: $var = $ip $port"
-    fi
+	# Validate IP:PORT or HOSTNAME:PORT format
+	if [[ ! "$endpoint" =~ ^([a-zA-Z0-9.-]+):([0-9]{1,5})$ ]]; then
+	    echo "ERROR: $var has invalid format: $feed_value"
+	    echo "       Expected format: IP:PORT, HOSTNAME:PORT or IP:PORT|EXTRA ARGUMENTS"
+	    echo "       Example: 192.168.1.100:5000 or feed.example.com:5000 or 192.168.1.100:5000|JSON ON"
+	    feed_error=true
+	    continue
+	fi
+
+	host="${BASH_REMATCH[1]}"
+	port="${BASH_REMATCH[2]}"
+
+	# Validate port range
+	if [ "$port" -gt 65535 ]; then
+	    echo "ERROR: $var has invalid port number: $port (must be 1-65535)"
+	    feed_error=true
+	    continue
+	fi
+
+	# Build the feed string
+	if [ -n "$extra_args" ]; then
+	    AIS_FEEDS="$AIS_FEEDS -u $host $port $extra_args"
+	    echo "Found feed: $var = $host $port $extra_args"
+	else
+	    AIS_FEEDS="$AIS_FEEDS -u $host $port"
+	    echo "Found feed: $var = $host $port"
+	fi
 done
 
 if [ "$feed_error" = true ]; then
