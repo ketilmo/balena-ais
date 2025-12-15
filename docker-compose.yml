@@ -8,8 +8,8 @@ services:
       - LAT=
       - LON=
       - AIS_STATION_NAME=
-      - AIS_DEVICE=00000162
-      - AIS_FEED_LOCALHOST=127.0.0.1:10110
+      - AIS_DEVICE=0
+      - AIS_WEB_PORT=8100 
     devices:
       - "/dev/bus/usb"
     expose:
