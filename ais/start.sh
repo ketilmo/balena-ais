@@ -21,71 +21,71 @@ missing_variables=false
 [ -z "$AIS_STATION_NAME" ] && echo "Receiver station name is missing, will abort startup." && missing_variables=true || echo "Receiver station name is set: $AIS_STATION_NAME"
 [ -z "$AIS_DEVICE" ] && echo "Receiver device ID is missing, will abort startup." && missing_variables=true || echo "Receiver device ID is set: $AIS_DEVICE"
 
-# Parse dynamic AIS feed configurations
-# Format: AIS_FEED_<NAME>=IP:PORT or AIS_FEED_<NAME>=IP:PORT|EXTRA ARGUMENTS
+# Parse dynamic AIS UDP output configurations
+# Format: AIS_OUTPUT_UDP_<NAME>=IP:PORT or AIS_OUTPUT_UDP_<NAME>=IP:PORT|EXTRA ARGUMENTS
 # Examples:
-#   AIS_FEED_LOCAL=127.0.0.1:10110
-#   AIS_FEED_REMOTE=192.168.0.1:4002|JSON ON
+#   AIS_OUTPUT_UDP_LOCAL=127.0.0.1:10110
+#   AIS_OUTPUT_UDP_REMOTE=192.168.0.1:4002|JSON ON
+#   AIS_OUTPUT_UDP_BACKUP=feed.example.com:5000|JSON ON
 
 # Build AIS-catcher configuration from validated variables
 AIS_CONFIG="-d $AIS_DEVICE -N 8100 -gr RTLAGC on TUNER auto -a 192K -p 53 -v 10 -M DT -N REALTIME on -N STATION $AIS_STATION_NAME -N LAT $LAT LON $LON SHARE_LOC on"
+AIS_OUTPUT_UDP=""
+echo "Scanning for AIS UDP output configurations..."
+output_error=false
 
-AIS_FEEDS=""
-echo "Scanning for AIS feed configurations..."
-feed_error=false
-
-for var in $(compgen -e | grep "^AIS_FEED_" | sort); do
-    feed_value="${!var}"
+for var in $(compgen -e | grep "^AIS_OUTPUT_UDP_" | sort); do
+    output_value="${!var}"
     
-    if [ -z "$feed_value" ]; then
+    if [ -z "$output_value" ]; then
         echo "Warning: $var is empty, skipping"
         continue
     fi
     
     # Split on pipe to separate IP:PORT from extra arguments
     # Format: IP:PORT|EXTRA_ARGUMENTS or just IP:PORT
-    IFS='|' read -r endpoint extra_args <<< "$feed_value"
+    IFS='|' read -r endpoint extra_args <<< "$output_value"
     
-	# Validate IP:PORT or HOSTNAME:PORT format
-	if [[ ! "$endpoint" =~ ^([a-zA-Z0-9.-]+):([0-9]{1,5})$ ]]; then
-	    echo "ERROR: $var has invalid format: $feed_value"
-	    echo "       Expected format: IP:PORT, HOSTNAME:PORT or IP:PORT|EXTRA ARGUMENTS"
-	    echo "       Example: 192.168.1.100:5000 or feed.example.com:5000 or 192.168.1.100:5000|JSON ON"
-	    feed_error=true
-	    continue
-	fi
-
-	host="${BASH_REMATCH[1]}"
-	port="${BASH_REMATCH[2]}"
-
-	# Validate port range
-	if [ "$port" -gt 65535 ]; then
-	    echo "ERROR: $var has invalid port number: $port (must be 1-65535)"
-	    feed_error=true
-	    continue
-	fi
-
-	# Build the feed string
-	if [ -n "$extra_args" ]; then
-	    AIS_FEEDS="$AIS_FEEDS -u $host $port $extra_args"
-	    echo "Found feed: $var = $host $port $extra_args"
-	else
-	    AIS_FEEDS="$AIS_FEEDS -u $host $port"
-	    echo "Found feed: $var = $host $port"
-	fi
+    # Validate IP:PORT or HOSTNAME:PORT format
+    if [[ ! "$endpoint" =~ ^([a-zA-Z0-9.-]+):([0-9]{1,5})$ ]]; then
+        echo "ERROR: $var has invalid format: $output_value"
+        echo "       Expected format: IP:PORT, HOSTNAME:PORT or IP:PORT|EXTRA ARGUMENTS"
+        echo "       Example: 192.168.1.100:5000 or feed.example.com:5000 or 192.168.1.100:5000|JSON ON"
+        output_error=true
+        continue
+    fi
+    
+    host="${BASH_REMATCH[1]}"
+    port="${BASH_REMATCH[2]}"
+    
+    # Validate port range
+    if [ "$port" -gt 65535 ]; then
+        echo "ERROR: $var has invalid port number: $port (must be 1-65535)"
+        output_error=true
+        continue
+    fi
+    
+    # Build the output string
+    if [ -n "$extra_args" ]; then
+        AIS_OUTPUT_UDP="$AIS_OUTPUT_UDP -u $host $port $extra_args"
+        echo "Found UDP output: $var = $host $port $extra_args"
+    else
+        AIS_OUTPUT_UDP="$AIS_OUTPUT_UDP -u $host $port"
+        echo "Found UDP output: $var = $host $port"
+    fi
 done
 
-if [ "$feed_error" = true ]; then
+if [ "$output_error" = true ]; then
     echo " "
-    echo "ERROR: One or more AIS feed configurations are invalid, aborting..."
+    echo "ERROR: One or more AIS UDP output configurations are invalid, aborting..."
     echo " "
     balena-idle
 fi
 
-if [ -z "$AIS_FEEDS" ]; then
-    echo "No AIS feeds configured (no AIS_FEED_* variables found)"
+if [ -z "$AIS_OUTPUT_UDP" ]; then
+    echo "No AIS UDP outputs configured (no AIS_OUTPUT_UDP_* variables found)"
 else
-    echo "Configured feeds:$AIS_FEEDS"
+    echo "Configured UDP outputs:$AIS_OUTPUT_UDP"
 fi
 
 # End defining all the required configuration variables.
@@ -102,7 +102,7 @@ echo " "
 
 # Variables are verified – continue with startup procedure.
 # Start AIS-catcher and put it in the background.
-/usr/local/bin/AIS-catcher $AIS_CONFIG $AIS_FEEDS &
+/usr/local/bin/AIS-catcher $AIS_CONFIG $AIS_OUTPUT_UDP &
 
 # Wait for any services to exit.
 wait -n
