@@ -2,7 +2,7 @@
 FROM balenalib/%%BALENA_ARCH%%-debian:bookworm AS base
 LABEL maintainer="https://github.com/ketilmo"
 
-EXPOSE 8100 10110
+EXPOSE 8100
 
 # Minimum environment variables needed to run the receiver
 ENV LAT=
