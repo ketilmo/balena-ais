@@ -21,6 +21,20 @@ config_error=false
 [ -z "$LON" ] && echo "Receiver longitude is missing, will abort startup." && missing_variables=true || echo "Receiver longitude is set: $LON"
 [ -z "$AIS_STATION_NAME" ] && echo "Receiver station name is missing, will abort startup." && missing_variables=true || echo "Receiver station name is set: $AIS_STATION_NAME"
 [ -z "$AIS_DEVICE" ] && echo "Receiver device ID is missing, will abort startup." && missing_variables=true || echo "Receiver device ID is set: $AIS_DEVICE"
+
+# Check for AIS-catcher community feed sharing
+AIS_SHARING=""
+if [ "${AIS_ENABLE_AISCATCHER_COMMUNITY_FEED,,}" = "true" ]; then
+    if [ -n "$AIS_AISCATCHER_SHARING_KEY" ]; then
+        echo "AIS-catcher community feed sharing enabled (attributed) with key: $AIS_AISCATCHER_SHARING_KEY"
+        AIS_SHARING="-X $AIS_AISCATCHER_SHARING_KEY"
+    else
+        echo "AIS-catcher community feed sharing enabled (anonymous)"
+        echo "To enable attributed sharing, set AIS_AISCATCHER_SHARING_KEY to your sharing key"
+        AIS_SHARING="-X"
+    fi
+fi
+
 # Function to parse output configurations
 # Usage: parse_outputs "PREFIX" "CLI_FLAG"
 # Example: parse_outputs "AIS_OUTPUT_UDP" "-u"
