@@ -16,7 +16,7 @@ ENV AIS_ADDITIONAL_METADATA=DTM
 ENV AIS_WEB_PORT=8100
 
 # Build commands
-ARG PERM_INSTALL="libusb-1.0-0 libairspy0 libhackrf0 libzmq5 libsoxr0 libpq5 libz1 libssl3 sqlite3 tini"
+ARG PERM_INSTALL="libusb-1.0-0 libairspy0 libhackrf0 libzmq5 libsoxr0 libpq5 libz1 libssl3 sqlite3 tini curl"
 
 RUN apt update && \
     apt install -y $PERM_INSTALL && \
