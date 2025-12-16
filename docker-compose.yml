@@ -9,7 +9,10 @@ services:
       - LON=
       - AIS_STATION_NAME=
       - AIS_DEVICE=0
-      - AIS_WEB_PORT=8100 
+      - AIS_TUNER_BANDWIDTH=192K
+      - AIS_DEVICE_CORRECTION_PPM=off
+      - AIS_ADDITIONAL_METADATA=DTM
+      - AIS_WEB_PORT=8100
     devices:
       - "/dev/bus/usb"
     expose:

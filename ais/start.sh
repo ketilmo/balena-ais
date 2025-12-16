@@ -53,6 +53,7 @@ parse_outputs() {
     
     echo "$output_string"
 }
+
 # Parse all output types
 # Format: AIS_OUTPUT_<TYPE>_<NAME>=VALUE|ARG1|ARG2|...
 # Examples:
@@ -65,8 +66,9 @@ AIS_OUTPUT_TCPC=$(parse_outputs "AIS_OUTPUT_TCPC" "-P")
 AIS_OUTPUT_UDP=$(parse_outputs "AIS_OUTPUT_UDP" "-u")
 AIS_OUTPUT_HTTP=$(parse_outputs "AIS_OUTPUT_HTTP" "-H")
 AIS_OUTPUT_MQTT=$(parse_outputs "AIS_OUTPUT_MQTT" "-Q")
+
 # Build base configuration
-AIS_CONFIG="-d $AIS_DEVICE -N $AIS_WEB_PORT -gr RTLAGC on TUNER auto -a 192K -p 53 -v 10 -M DTM -N REALTIME on -N STATION $AIS_STATION_NAME -N LAT $LAT LON $LON SHARE_LOC on"
+AIS_CONFIG="-d $AIS_DEVICE -gr RTLAGC on TUNER auto BIASTEE off -a $AIS_TUNER_BANDWIDTH -p $AIS_DEVICE_CORRECTION_PPM -v $AIS_VERBOSE_MODE -M $AIS_ADDITIONAL_METADATA -N $AIS_WEB_PORT REALTIME on STATION $AIS_STATION_NAME LAT $LAT LON $LON SHARE_LOC on $AIS_OUTPUT_TCPS $AIS_OUTPUT_TCPC $AIS_OUTPUT_UDP $AIS_OUTPUT_HTTP $AIS_OUTPUT_MQTT"
 # Check for missing variables or configuration errors
 echo " "
 if [ "$missing_variables" = true ]; then
@@ -82,6 +84,6 @@ fi
 echo "Settings verified, proceeding with startup."
 echo " "
 # Start AIS-catcher with all configurations
-/usr/local/bin/AIS-catcher $AIS_CONFIG $AIS_OUTPUT_TCPS $AIS_OUTPUT_TCPC $AIS_OUTPUT_UDP $AIS_OUTPUT_HTTP $AIS_OUTPUT_MQTT &
+/usr/local/bin/AIS-catcher $AIS_CONFIG  &
 # Wait for any services to exit
 wait -n
