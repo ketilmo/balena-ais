@@ -40,7 +40,11 @@ parse_outputs() {
         IFS='|' read -ra parts <<< "$output_value"
         
         # Build output string with cli flag and all parts
-        output_string="$output_string $cli_flag"
+        # Only add space if output_string is not empty
+        if [ -n "$output_string" ]; then
+            output_string="$output_string "
+        fi
+        output_string="$output_string$cli_flag"
         
         for part in "${parts[@]}"; do
             if [ -n "$part" ]; then
